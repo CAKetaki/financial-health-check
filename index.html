@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Business Health Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,500;1,8..60,600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a ledger page. Ruled lines, one brass tick mark motif, a serif and sans pairing for a chartered-accountant feel, and a radar scorecard as the single bold moment. */
+:root {
+  --ink: #0e1217;
+  --panel: #151a21;
+  --panel-2: #1c222b;
+  --line: #2a323d;
+  --text: #ece9e2;
+  --muted: #98a2ae;
+  --brass: #cda552;
+  --good: #5fc59a;
+  --watch: #f0a04b;
+  --risk: #ef6a5b;
+  --display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "Source Serif 4", Georgia, serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--ink); }
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.55;
+  font-variant-numeric: lining-nums tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 760px; margin: 0 auto; padding: 28px 16px 56px; }
+.topline { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.topline strong { color: var(--text); font-weight: 600; letter-spacing: 0.02em; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.1; }
+.tick { color: var(--brass); }
+
+/* Hero */
+.hero { margin-top: 28px; padding: 32px 24px 28px; border: 1px solid var(--line); border-radius: 10px; background-color: var(--panel); background-image: linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px); background-size: 100% 34px; }
+.eyebrow { font-family: var(--body); font-weight: 600; font-size: 12px; color: var(--brass); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+.hero h1 { font-size: clamp(33px, 6.6vw, 52px); font-weight: 600; letter-spacing: -0.015em; line-height: 1.1; }
+.hero h1 em { font-style: italic; font-weight: 600; color: var(--brass); }
+.lede { max-width: 56ch; color: #c9ccd0; margin: 16px 0 0; font-size: 17px; }
+.field { margin-top: 24px; }
+.field-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; display: block; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: inherit; font-size: 14px; color: var(--text); background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.chip:hover { border-color: #3b4552; }
+.chip[aria-pressed="true"] { border-color: var(--brass); background: rgba(205,165,82,0.14); color: #f3dfb0; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 28px; }
+.btn { font: inherit; font-weight: 600; font-size: 17px; border-radius: 10px; padding: 13px 22px; border: 1px solid transparent; cursor: pointer; text-decoration: none; display: inline-block; }
+.btn-primary { background: var(--brass); color: #1a1405; }
+.btn-primary:hover { background: #dcb560; }
+.btn-ghost { background: transparent; color: var(--text); border-color: var(--line); }
+.btn-ghost:hover { border-color: #46515f; }
+.note { font-size: 13.5px; color: var(--muted); }
+:focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
+.byline { margin-top: 22px; font-size: 14px; color: var(--muted); }
+.byline strong { color: var(--text); font-weight: 600; }
+
+/* Quiz */
+.hidden { display: none !important; }
+.quiz { margin-top: 28px; }
+.pmeta { display: flex; justify-content: space-between; align-items: baseline; font-weight: 600; font-size: 15px; color: var(--muted); }
+.pmeta #q-pct { font-family: var(--display); font-size: 18px; color: var(--text); }
+.track { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 8px; }
+.track i { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--brass); transition: width 0.35s ease, background 0.3s; }
+.track.thin { height: 6px; }
+.meter { margin-top: 16px; padding: 12px 14px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.meter .row { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--muted); }
+.meter .mv { font-family: var(--display); font-weight: 600; font-size: 22px; color: var(--text); }
+.qarea { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--brass); margin-bottom: 12px; }
+.qcard { margin-top: 16px; padding: 26px 22px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.qtext { font-family: var(--display); font-weight: 600; font-size: clamp(22px, 4.6vw, 30px); line-height: 1.22; letter-spacing: -0.01em; text-wrap: balance; }
+.opts { display: grid; gap: 10px; margin-top: 22px; }
+.opt { font: inherit; text-align: left; color: var(--text); background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 15px 16px; cursor: pointer; display: flex; gap: 12px; align-items: baseline; }
+.opt:hover { border-color: #46515f; }
+.opt .pts { font-family: var(--mono); font-size: 12.5px; color: var(--muted); min-width: 36px; }
+.opt[aria-pressed="true"] { border-color: var(--brass); background: rgba(205,165,82,0.13); }
+.opt[aria-pressed="true"] .pts { color: var(--brass); }
+.why { margin: 18px 0 0; font-size: 14.5px; color: var(--muted); }
+.why b { color: #c9ccd0; font-weight: 600; }
+.qnav { display: flex; justify-content: space-between; margin-top: 16px; }
+.linkbtn { font: inherit; font-size: 14.5px; color: var(--muted); background: none; border: 0; padding: 8px 4px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.linkbtn:hover { color: var(--text); }
+.linkbtn:disabled { opacity: 0.35; cursor: default; text-decoration: none; }
+
+/* Result */
+.result { margin-top: 28px; }
+.rhead { display: grid; grid-template-columns: 170px 1fr; gap: 24px; align-items: center; padding: 24px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.ring { position: relative; width: 170px; height: 170px; }
+.ring svg { width: 100%; height: 100%; display: block; }
+.ring-num { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring-num b { font-family: var(--display); font-weight: 600; font-size: 48px; line-height: 1; }
+.ring-num small { font-family: var(--mono); font-size: 13px; color: var(--muted); margin-top: 4px; }
+.rhead h2 { font-size: clamp(26px, 5vw, 36px); letter-spacing: -0.015em; }
+.rhead p { margin: 10px 0 0; color: #c9ccd0; max-width: 46ch; }
+.band { display: inline-block; font-family: var(--mono); font-size: 12px; padding: 3px 9px; border-radius: 4px; margin-bottom: 12px; border: 1px solid currentColor; }
+.sec { margin-top: 34px; }
+.sec h3 { font-size: 22px; letter-spacing: -0.01em; }
+.sec .sub { margin: 6px 0 0; color: var(--muted); font-size: 14.5px; }
+.radar-wrap { margin-top: 14px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.radar-wrap svg { width: 100%; height: auto; display: block; max-height: 420px; }
+.areas { margin-top: 14px; display: grid; gap: 10px; }
+.area { display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; align-items: center; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.area .nm { font-weight: 600; }
+.area .sc { font-family: var(--mono); font-size: 14px; color: var(--muted); text-align: right; }
+.bar { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 4px; }
+.pill { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; margin-left: 10px; vertical-align: 1px; }
+.pill.risk { color: var(--risk); background: rgba(239,106,91,0.14); }
+.pill.watch { color: var(--watch); background: rgba(240,160,75,0.14); }
+.pill.good { color: var(--good); background: rgba(95,197,154,0.14); }
+.steps { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: s; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.steps li::before { content: counter(s); font-family: var(--mono); color: var(--brass); font-size: 18px; line-height: 1.3; }
+.steps .tag { display: block; font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.lead { margin-top: 38px; padding: 26px 22px; border: 1px solid #5a4a26; border-radius: 10px; background: linear-gradient(180deg, rgba(205,165,82,0.10), rgba(205,165,82,0.03)); }
+.lead h3 { font-size: 26px; letter-spacing: -0.015em; }
+.lead p { margin: 10px 0 0; color: #d4d0c6; max-width: 58ch; }
+.lead .actions { margin-top: 20px; }
+.addr { font-family: var(--body); font-weight: 600; font-size: 15px; color: #f3dfb0; overflow-wrap: anywhere; }
+details { margin-top: 16px; }
+summary { cursor: pointer; font-size: 14px; color: var(--muted); }
+textarea { width: 100%; min-height: 190px; margin-top: 10px; background: var(--ink); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; resize: vertical; }
+.status { min-height: 20px; font-size: 14px; color: var(--good); margin-top: 10px; }
+.foot { margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); display: grid; gap: 6px; }
+.foot a { color: #c9ccd0; }
+
+@media (max-width: 560px) {
+  .rhead { grid-template-columns: 1fr; justify-items: start; }
+  .hero { padding: 26px 18px 24px; }
+  .qcard { padding: 22px 16px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topline">
+    <strong>Business Health Check</strong>
+    <span>by Ketaki Agarwalla, Chartered Accountant</span>
+  </div>
+
+  <!-- Start -->
+  <section class="hero" id="screen-start">
+    <div class="eyebrow">15 questions · about 3 minutes</div>
+    <h1>Where is your business <em>quietly</em> losing money?</h1>
+    <p class="lede">Most losses do not announce themselves. Choose your type of business, answer 15 questions written for it, and get a scorecard that shows where to look first.</p>
+    <div class="field">
+      <span class="field-label" id="biz-label">Your type of business</span>
+      <div class="chips" role="group" aria-labelledby="biz-label" id="biz-chips"></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="start-btn" type="button">Start the check</button>
+      <span class="note" id="start-note">No sign-up. Your answers stay on this page.</span>
+    </div>
+    <p class="byline"><strong>Ketaki Agarwalla</strong>, Chartered Accountant. Ketaki Agarwalla &amp; Associates, Siliguri.</p>
+  </section>
+
+  <!-- Quiz -->
+  <section class="quiz hidden" id="screen-quiz" aria-live="polite">
+    <div class="pmeta"><span id="q-count">Question 1 of 15</span><span id="q-pct">7%</span></div>
+    <div class="track" aria-hidden="true"><i id="p-bar" style="width:7%"></i></div>
+    <div class="meter">
+      <div class="row"><span>Readiness so far</span><span class="mv" id="m-val">0%</span></div>
+      <div class="track thin" aria-hidden="true"><i id="m-bar"></i></div>
+    </div>
+    <div class="qcard">
+      <div class="qarea" id="q-area"></div>
+      <div class="qtext" id="q-text"></div>
+      <div class="opts" id="q-opts" role="group" aria-label="Answer"></div>
+      <p class="why" id="q-why"></p>
+    </div>
+    <div class="qnav">
+      <button class="linkbtn" id="back-btn" type="button">Back</button>
+      <button class="linkbtn" id="restart-btn" type="button">Start over</button>
+    </div>
+  </section>
+
+  <!-- Result -->
+  <section class="result hidden" id="screen-result">
+    <div class="rhead">
+      <div class="ring">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="#2a323d" stroke-width="10"></circle>
+          <circle id="ring-arc" cx="60" cy="60" r="52" fill="none" stroke="#cda552" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)" style="transition: stroke-dashoffset 0.9s ease, stroke 0.3s"></circle>
+        </svg>
+        <div class="ring-num"><b id="ring-total">0</b><small>out of 30</small></div>
+      </div>
+      <div>
+        <span class="band" id="band"></span>
+        <h2 id="band-title"></h2>
+        <p id="band-text"></p>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h3>Your six areas at a glance</h3>
+      <p class="sub">The further a point sits from the centre, the stronger that area is.</p>
+      <div class="radar-wrap"><svg id="radar" viewBox="0 0 400 360" role="img" aria-label="Radar chart of your six area scores"></svg></div>
+      <div class="areas" id="areas"></div>
+    </div>
+
+    <div class="sec">
+      <h3>Start here</h3>
+      <p class="sub" id="steps-sub"></p>
+      <ol class="steps" id="steps"></ol>
+    </div>
+
+    <div class="lead">
+      <h3>Curious what your pattern means for your business?</h3>
+      <p>Every business has a different mix of gaps. Email me your scorecard and I will share a few observations specific to how a business like yours tends to lose money, and what to check first.</p>
+      <div class="actions">
+        <button class="btn btn-primary" id="copy-btn" type="button">Copy my scorecard</button>
+      </div>
+      <div class="status" id="status" role="status"></div>
+      <p class="note">Copy the text, then email it to <span class="addr">ca.ketakiagarwalla@gmail.com</span></p>
+      <details>
+        <summary>Preview the message</summary>
+        <textarea id="msg" readonly aria-label="Scorecard message"></textarea>
+      </details>
+    </div>
+
+    <div class="actions" style="margin-top:26px">
+      <button class="btn btn-ghost" id="retake-btn" type="button">Retake the check</button>
+      <button class="btn btn-ghost" id="share-btn" type="button">Copy link to share</button>
+      <a class="btn btn-ghost" href="https://www.linkedin.com/in/ketaki-agarwalla-b87990241/" target="_blank" rel="noopener">Follow on LinkedIn</a>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>This is a general self-check for business owners. It is not an audit and not professional advice for any specific business.</span>
+    <span>Ketaki Agarwalla &amp; Associates · Chartered Accountants · Siliguri, West Bengal</span>
+  </div>
+</div>
+
+<script>
+(function () {
+  var EMAIL = "ca.ketakiagarwalla@gmail.com";
+
+  var SETS = {
+    manufacturer: { label: "Manufacturer", areas: [
+  {
+    "key": "store",
+    "name": "Raw material and store",
+    "short": "Store",
+    "max": 6,
+    "actions": [
+      "Pick one day a month for a surprise count of raw material by someone who does not keep the store notebook.",
+      "Note every issue of material to the shop floor, even as a WhatsApp message to the store, so nothing leaves without a record."
+    ]
+  },
+  {
+    "key": "prod",
+    "name": "Production and wastage",
+    "short": "Production",
+    "max": 6,
+    "actions": [
+      "Fix a rough norm of material per unit for your main product and ask to be told when actual use runs well above it.",
+      "Weigh all scrap and sell it only with your knowledge, with the money coming to you."
+    ]
+  },
+  {
+    "key": "buy",
+    "name": "Purchases and payments",
+    "short": "Purchases",
+    "max": 6,
+    "actions": [
+      "Make an order, even a WhatsApp message with rate and quantity, the starting point of every purchase.",
+      "Match the bill to the order and to the goods received before any supplier is paid."
+    ]
+  },
+  {
+    "key": "sales",
+    "name": "Dispatch and sales",
+    "short": "Dispatch",
+    "max": 4,
+    "actions": [
+      "Compare dispatch slips with bills every week and chase every mismatch.",
+      "Record samples, free goods and goods taken by family or staff in the same way as sales."
+    ]
+  },
+  {
+    "key": "wages",
+    "name": "Workers and wages",
+    "short": "Wages",
+    "max": 4,
+    "actions": [
+      "Ask someone other than the preparer to check the wage sheet against attendance, and to confirm that every name is a real person who worked.",
+      "Reconcile GST, TDS and any PF or ESIC dues to your records before each payment or filing."
+    ]
+  },
+  {
+    "key": "cash",
+    "name": "Cash, bank and systems",
+    "short": "Cash",
+    "max": 4,
+    "actions": [
+      "Match the bank statement to your books on a fixed date each month and write down every difference.",
+      "Check ten random entries from your Excel sheet or software against the source papers every month."
+    ]
+  }
+], questions: [
+  {
+    "a": "store",
+    "q": "Is raw material physically counted at least once a month by someone other than the person who keeps the store notebook or register?",
+    "why": "A register can show material that is no longer on the shelf."
+  },
+  {
+    "a": "store",
+    "q": "Does material leave the store for the shop floor only against a written or messaged request that the store notes down?",
+    "why": "Material that leaves informally can never be missed."
+  },
+  {
+    "a": "store",
+    "q": "If material started going missing from the store, would someone other than the storekeeper notice within a month?",
+    "why": "A loss only one person can see is a loss that can continue."
+  },
+  {
+    "a": "prod",
+    "q": "Do you have a rough norm for how much material one unit of your main product should use, and do you get to know when actual use runs well above it?",
+    "why": "Without a normal level, losses look normal."
+  },
+  {
+    "a": "prod",
+    "q": "Is scrap, leftover material and waste sold only with your knowledge, weighed, with the money coming to you?",
+    "why": "Scrap is a favourite place for small, regular leakage."
+  },
+  {
+    "a": "prod",
+    "q": "Is each day's output counted and tallied with what reaches the store or dispatch, so that missing pieces show up within days?",
+    "why": "A gap found in a week is a question; found in a year it is a write-off."
+  },
+  {
+    "a": "buy",
+    "q": "Does every purchase begin with an order (a WhatsApp message counts) that fixes the rate and quantity?",
+    "why": "Without an order there is nothing to check the bill against."
+  },
+  {
+    "a": "buy",
+    "q": "Before a supplier is paid, is the bill matched to the order and to what was actually received?",
+    "why": "This stops short supply, wrong rates, and duplicate or inflated bills."
+  },
+  {
+    "a": "buy",
+    "q": "Is the person who approves a payment different from the person who releases it, or, if your team is very small, do you personally approve every payment above a limit you have set?",
+    "why": "One person doing both is how a single mistake becomes a loss."
+  },
+  {
+    "a": "sales",
+    "q": "Are dispatches and bills matched at least weekly, so that nothing leaves without a bill and no bill is raised without a dispatch?",
+    "why": "Mismatches show unbilled goods or wrong invoices early."
+  },
+  {
+    "a": "sales",
+    "q": "Are samples, free goods, gifts, and goods taken by family or staff recorded and approved in the same way as sales?",
+    "why": "Goods leaving outside the bill book are the hardest to trace."
+  },
+  {
+    "a": "wages",
+    "q": "Is the wage sheet (daily, piece-rate, overtime) matched to attendance or output records and checked by someone other than the person who prepared it, including that every name on it is a real person who worked?",
+    "why": "Wrong wages, ghost names and double entries are caught here."
+  },
+  {
+    "a": "wages",
+    "q": "Are GST, TDS and any PF or ESIC payments that apply to you reconciled to your wage and purchase records before each payment or filing?",
+    "why": "Mismatches lead to notices and penalties later."
+  },
+  {
+    "a": "cash",
+    "q": "Is your bank statement matched to your books every month with each difference explained in writing, and is cash in hand counted and agreed to the cash book by someone other than the person who handles it?",
+    "why": "Unexplained differences are early warnings; cash needs a second person's eyes."
+  },
+  {
+    "a": "cash",
+    "q": "If your Excel sheet, Tally or any app started giving wrong numbers, would you find out within a month, and how?",
+    "why": "Automation repeats an error faster than a person can, and no one notices unless someone checks."
+  }
+] },
+    wholesaler: { label: "Wholesaler or distributor", areas: [
+  {
+    "key": "stock",
+    "name": "Stock and godown",
+    "short": "Godown",
+    "max": 6,
+    "actions": [
+      "Pick one day a month for a surprise stock count by someone who does not keep the godown register.",
+      "Put every item leaving the godown, including samples and replacements, on a slip that a second person signs."
+    ]
+  },
+  {
+    "key": "buy",
+    "name": "Purchases and supplier dues",
+    "short": "Purchases",
+    "max": 6,
+    "actions": [
+      "Check quantity, rate, batch and damage against the bill when goods arrive, before the bill is accepted.",
+      "Split the work: one person approves a payment, another releases it, or you approve every payment above a set limit."
+    ]
+  },
+  {
+    "key": "sales",
+    "name": "Sales, billing and dispatch",
+    "short": "Sales",
+    "max": 6,
+    "actions": [
+      "Compare dispatches with bills every week and chase every mismatch.",
+      "Ask for your approval before any rate change, discount or credit note is applied, and see a list of them each week."
+    ]
+  },
+  {
+    "key": "dues",
+    "name": "Customer dues",
+    "short": "Dues",
+    "max": 4,
+    "actions": [
+      "Set a credit limit for each customer and review overdue accounts every week.",
+      "Send balance statements to your larger customers twice a year and follow up every difference."
+    ]
+  },
+  {
+    "key": "bank",
+    "name": "Cash, bank and GST matching",
+    "short": "Bank & GST",
+    "max": 4,
+    "actions": [
+      "Match the bank statement to your books each month and write down every difference.",
+      "Before each GST filing, match your purchase record with the credit showing for your suppliers' bills."
+    ]
+  },
+  {
+    "key": "soft",
+    "name": "People and software",
+    "short": "Software",
+    "max": 4,
+    "actions": [
+      "Limit who can edit or delete a finalised bill, and look at the list of such changes each month.",
+      "Compare the stock in your software with a godown count every month."
+    ]
+  }
+], questions: [
+  {
+    "a": "stock",
+    "q": "Is stock counted every month by someone other than the person who keeps the godown register or software stock?",
+    "why": "A register can show stock that no longer exists."
+  },
+  {
+    "a": "stock",
+    "q": "Does every item leaving the godown, including samples, replacements and outward \"adjustments\", go on a slip that a second person signs or you see?",
+    "why": "Unrecorded movements are where stock disappears."
+  },
+  {
+    "a": "stock",
+    "q": "Each month, do you list slow-moving, damaged and near-expiry stock and decide on each item (sell, return to supplier, write off)?",
+    "why": "Dead stock ties up cash and turns into a write-off later."
+  },
+  {
+    "a": "buy",
+    "q": "Is every purchase based on an order, with goods checked against the bill on arrival for quantity, rate, batch and damage before the bill is accepted?",
+    "why": "Short supply and wrong rates are caught at the door, not after payment."
+  },
+  {
+    "a": "buy",
+    "q": "Are supplier schemes, rate differences and credit notes tracked, and does someone check that each one was actually received?",
+    "why": "Benefits promised but never claimed are lost margin."
+  },
+  {
+    "a": "buy",
+    "q": "Is the person who approves a payment different from the person who releases it, or do you personally approve every payment above a limit you have set?",
+    "why": "One person doing both is how a single mistake becomes a loss."
+  },
+  {
+    "a": "sales",
+    "q": "Are dispatches and bills matched at least weekly, so that nothing leaves without a bill and no bill is raised without a dispatch?",
+    "why": "Mismatches show unbilled goods or wrong invoices early."
+  },
+  {
+    "a": "sales",
+    "q": "Are rate changes, discounts, credit notes and sales returns approved by you before they are applied, and do you see a list of them?",
+    "why": "These are quiet ways for margin to disappear."
+  },
+  {
+    "a": "sales",
+    "q": "Do salesmen and delivery staff hand over cash and returned goods the same day against a written record, and is any delivery without a matching receipt followed up?",
+    "why": "Field cash and returns are hard to trace later."
+  },
+  {
+    "a": "dues",
+    "q": "Does each customer have a credit limit, and do you review overdue accounts every week, including those that have crossed the limit?",
+    "why": "Credit without limits turns into bad debt."
+  },
+  {
+    "a": "dues",
+    "q": "At least twice a year, do you send balance statements to your larger customers and follow up every difference?",
+    "why": "Disputes surface early, not at write-off time."
+  },
+  {
+    "a": "bank",
+    "q": "Is your bank statement matched to your books every month with each difference explained in writing, and is cash in hand counted by someone other than the person who handles it?",
+    "why": "Unexplained differences are early warnings."
+  },
+  {
+    "a": "bank",
+    "q": "Before each GST filing, is your purchase record matched with the credit showing for your suppliers' bills, and are mismatches chased?",
+    "why": "Credit claimed on wrong or missing bills invites notices."
+  },
+  {
+    "a": "soft",
+    "q": "Can only you or one named person edit or delete a finalised bill or stock entry in your software, and can you see such changes?",
+    "why": "Quiet edits after billing are a classic way to hide a loss."
+  },
+  {
+    "a": "soft",
+    "q": "If stock in your software and stock in the godown began to differ, would you find out within a month, and how?",
+    "why": "Silent differences grow for as long as they go unseen."
+  }
+] },
+    services: { label: "Service provider", areas: [
+  {
+    "key": "bill",
+    "name": "Billing and collections",
+    "short": "Billing",
+    "max": 6,
+    "actions": [
+      "Each month, list the work done and tick it against bills raised, so no work is left unbilled.",
+      "Review overdue bills every week and name one person to follow up each of them."
+    ]
+  },
+  {
+    "key": "proj",
+    "name": "Time, projects and profitability",
+    "short": "Projects",
+    "max": 6,
+    "actions": [
+      "List your clients or services by how much they earn you after the effort they take.",
+      "Agree price and scope in writing before each job, even by WhatsApp, and bill every change."
+    ]
+  },
+  {
+    "key": "exp",
+    "name": "Expenses and payments",
+    "short": "Expenses",
+    "max": 6,
+    "actions": [
+      "Approve expenses before they are incurred and keep the bill for each.",
+      "Split the work: one person approves a payment, another releases it, or you approve every payment above a set limit."
+    ]
+  },
+  {
+    "key": "client",
+    "name": "Contracts and clients",
+    "short": "Clients",
+    "max": 4,
+    "actions": [
+      "Get a signed agreement or written acceptance of terms from every client.",
+      "Work out how much of your income comes from your top two clients and review it every quarter."
+    ]
+  },
+  {
+    "key": "people",
+    "name": "People and payroll",
+    "short": "People",
+    "max": 4,
+    "actions": [
+      "Check salaries and freelancer payments against attendance or work records, and confirm that every name on the list is genuine.",
+      "Keep a written list of who can access your bank, accounts and client files, and update it whenever someone leaves."
+    ]
+  },
+  {
+    "key": "cash",
+    "name": "Cash, tax and software",
+    "short": "Cash & tax",
+    "max": 4,
+    "actions": [
+      "Match the bank statement to your books each month and record owner withdrawals as drawings, not as business expenses.",
+      "Check a sample of automatically generated invoices and reminders every month."
+    ]
+  }
+], questions: [
+  {
+    "a": "bill",
+    "q": "Each month, do you check the work done against the bills raised, so that every piece of work is billed?",
+    "why": "Unbilled work is the most common silent loss in service businesses."
+  },
+  {
+    "a": "bill",
+    "q": "Do you review overdue bills every week, with a named person following up each one?",
+    "why": "Old dues are far harder to collect than new ones."
+  },
+  {
+    "a": "bill",
+    "q": "Are discounts, write-offs and free work approved by you before they are given?",
+    "why": "Goodwill gestures add up without anyone noticing."
+  },
+  {
+    "a": "proj",
+    "q": "Do you know, at least roughly, which clients or services make you money and which cost you more than they bring?",
+    "why": "A client can look profitable and still lose money."
+  },
+  {
+    "a": "proj",
+    "q": "Do you review a job's effort against its fee while the work is still in progress, not only at the end?",
+    "why": "Overruns can be fixed only while the work is live."
+  },
+  {
+    "a": "proj",
+    "q": "Is the price and scope of every job agreed in writing (a WhatsApp message counts), with changes recorded and billed?",
+    "why": "Unwritten extras are unpaid extras."
+  },
+  {
+    "a": "exp",
+    "q": "Are expenses approved before they are incurred and supported by bills?",
+    "why": "After-the-fact approval is rarely a real check."
+  },
+  {
+    "a": "exp",
+    "q": "Is the person who approves a payment different from the person who releases it, or do you personally approve payments above a limit you have set?",
+    "why": "One person doing both is how a single mistake becomes a loss."
+  },
+  {
+    "a": "exp",
+    "q": "Every quarter, do you review recurring payments and subscriptions and cancel those nobody uses?",
+    "why": "Forgotten subscriptions keep charging."
+  },
+  {
+    "a": "client",
+    "q": "Does every client have a signed agreement or written acceptance of your terms?",
+    "why": "Without paper, a dispute is one person's word against another's."
+  },
+  {
+    "a": "client",
+    "q": "Do you know how much of your income depends on your top two clients, and do you review it regularly?",
+    "why": "Losing one large client can threaten the whole business."
+  },
+  {
+    "a": "people",
+    "q": "Are salaries, stipends and freelancer payments checked against attendance or records of work before payment, and does someone check that every name on the list is genuine?",
+    "why": "Wrong payouts and ghost entries repeat every month."
+  },
+  {
+    "a": "people",
+    "q": "Do you keep a written list of who has access to your bank, accounts and client files, and update it whenever someone leaves?",
+    "why": "Old or shared access is a common, avoidable risk."
+  },
+  {
+    "a": "cash",
+    "q": "Is your bank statement matched to your books every month with each difference explained in writing, and are owner withdrawals recorded as drawings rather than as business expenses?",
+    "why": "Unexplained differences are early warnings; mixed personal spending hides real profit."
+  },
+  {
+    "a": "cash",
+    "q": "If invoices, reminders or reports were generated wrongly by software, would you find out within a month, and how?",
+    "why": "A wrong setting can repeat the same error hundreds of times."
+  }
+] },
+    other: { label: "Other business", areas: [
+    { key: "stock", name: "Stock and inventory", short: "Stock", max: 6, actions: [
+      "Pick one day a month for a surprise stock count by someone who does not keep the register.",
+      "Write down the normal wastage for each main material, and flag anything above it.",
+      "Use a store slip signed by two people for every movement of goods out." ] },
+    { key: "cash", name: "Cash and banking", short: "Cash", max: 6, actions: [
+      "Match the bank statement to your books on the same date every month and write down each difference.",
+      "Count cash in hand every week with a second person present.",
+      "List everyone who has banking access and remove anyone who no longer needs it." ] },
+    { key: "purchases", name: "Purchases and payments", short: "Purchases", max: 6, actions: [
+      "Make an approved order the starting point of every purchase: no order, no purchase.",
+      "Match the invoice, the order and the goods received before any supplier is paid.",
+      "Split the work: one person approves a payment, another releases it." ] },
+    { key: "sales", name: "Sales and billing", short: "Sales", max: 4, actions: [
+      "Compare dispatch slips with invoices every week and chase every mismatch.",
+      "Require your approval for discounts, credit notes and write-offs before they are applied." ] },
+    { key: "payroll", name: "Payroll, PF and ESIC", short: "Payroll", max: 4, actions: [
+      "Ask someone other than the preparer to check the wage sheet against attendance.",
+      "Reconcile PF and ESIC to the wage register before each monthly payment." ] },
+    { key: "automation", name: "Automation and software", short: "Automation", max: 4, actions: [
+      "Check ten random automated entries against their source documents every month.",
+      "Set a monthly review so that a silent error in an automated process cannot run for long." ] }
+  ], questions: [
+    { a: "stock", q: "Is stock physically counted every month by someone other than the person who keeps the stock register?", why: "A register can show stock that no longer exists." },
+    { a: "stock", q: "Do you know the normal wastage for each main material, and are you told when it is exceeded?", why: "Without a normal level, losses look normal." },
+    { a: "stock", q: "Is every movement of goods out of the store recorded on a slip that a second person signs?", why: "Unrecorded movements are where stock disappears." },
+    { a: "cash", q: "Is your bank statement matched to your books every month, with each difference explained in writing?", why: "Unexplained differences are early warnings." },
+    { a: "cash", q: "Is cash in hand counted regularly and agreed to the cash book by someone other than the person who handles it?", why: "The person holding the cash should not be the only one checking it." },
+    { a: "cash", q: "Do you know exactly who can see or change your bank login, and was that list checked this quarter?", why: "Old or shared access is a common and avoidable risk." },
+    { a: "purchases", q: "Does every purchase have an approved order before the goods arrive?", why: "Without an order, there is nothing to check the bill against." },
+    { a: "purchases", q: "Before a supplier is paid, is the invoice matched to the order and to the goods actually received?", why: "This stops duplicate, inflated and fake invoices." },
+    { a: "purchases", q: "Is the person who approves a payment different from the person who releases it?", why: "One person doing both is how a single mistake becomes a loss." },
+    { a: "sales", q: "Are dispatches and invoices matched at least weekly, so that nothing leaves without a bill?", why: "Mismatches show unbilled goods and wrong invoices early." },
+    { a: "sales", q: "Do you approve discounts, credit notes and written-off dues before they are applied?", why: "These are quiet ways for income to disappear." },
+    { a: "payroll", q: "Is the wage or salary sheet matched to attendance and checked by someone other than the person who prepared it?", why: "Wrong wages, ghost names and double entries get caught here." },
+    { a: "payroll", q: "Are PF and ESIC contributions reconciled to the wage register before each monthly payment and filing?", why: "Mismatches lead to notices and penalties later." },
+    { a: "automation", q: "When software creates invoices, entries, reconciliations or reports automatically, does a person check a sample every month?", why: "A wrong setting can repeat the same error hundreds of times." },
+    { a: "automation", q: "If an automated process started making errors, would you find out within a month?", why: "Silent errors grow for as long as they go unseen." }
+  ] }
+  };
+  var TYPES = ["manufacturer", "wholesaler", "services", "other"];
+  var AREAS = SETS.other.areas;
+  var QUESTIONS = SETS.other.questions;
+
+  var OPTIONS = [
+    { v: 2, label: "Yes, consistently" },
+    { v: 1, label: "Sometimes, or only informally" },
+    { v: 0, label: "No, or I am not sure" }
+  ];
+
+  var state = { idx: 0, answers: [], biz: "" };
+
+  function $(id) { return document.getElementById(id); }
+  function areaByKey(k) { for (var i = 0; i < AREAS.length; i++) if (AREAS[i].key === k) return AREAS[i]; }
+  function show(id) {
+    ["screen-start", "screen-quiz", "screen-result"].forEach(function (s) { $(s).classList.toggle("hidden", s !== id); });
+    window.scrollTo(0, 0);
+  }
+
+  /* Start screen */
+  function renderChips() {
+    var box = $("biz-chips");
+    box.innerHTML = "";
+    TYPES.forEach(function (t) {
+      var el = document.createElement("button");
+      el.type = "button";
+      el.className = "chip";
+      el.textContent = SETS[t].label;
+      el.setAttribute("aria-pressed", state.biz === t ? "true" : "false");
+      el.addEventListener("click", function () {
+        state.biz = t;
+        resetNote();
+        renderChips();
+      });
+      box.appendChild(el);
+    });
+  }
+
+  function resetNote() {
+    var n = $("start-note");
+    n.textContent = "No sign-up. Your answers stay on this page.";
+    n.style.color = "";
+  }
+
+  /* Quiz */
+  function startQuiz() {
+    if (!state.biz) {
+      var n = $("start-note");
+      n.textContent = "Please choose your type of business first, so the questions fit you.";
+      n.style.color = "#ef6a5b";
+      return;
+    }
+    AREAS = SETS[state.biz].areas;
+    QUESTIONS = SETS[state.biz].questions;
+    state.idx = 0;
+    state.answers = [];
+    show("screen-quiz");
+    renderQuestion();
+  }
+
+  function renderProgress() {
+    var pct = Math.round(((state.idx + 1) / QUESTIONS.length) * 100);
+    $("q-count").textContent = "Question " + (state.idx + 1) + " of " + QUESTIONS.length;
+    $("q-pct").textContent = pct + "%";
+    $("p-bar").style.width = pct + "%";
+    var sum = 0;
+    for (var i = 0; i < QUESTIONS.length; i++) if (state.answers[i] !== undefined) sum += state.answers[i];
+    var rp = Math.round((sum / 30) * 100);
+    $("m-val").textContent = rp + "%";
+    var mb = $("m-bar");
+    mb.style.width = rp + "%";
+    mb.style.background = rp <= 33 ? COLORS.risk : rp <= 66 ? COLORS.watch : COLORS.good;
+  }
+
+  function renderQuestion() {
+    var q = QUESTIONS[state.idx];
+    var area = areaByKey(q.a);
+    renderProgress();
+    $("q-area").textContent = area.name;
+    $("q-text").textContent = q.q;
+    $("q-why").innerHTML = "<b>Why it matters.</b> " + q.why;
+    var box = $("q-opts");
+    box.innerHTML = "";
+    OPTIONS.forEach(function (o) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "opt";
+      b.setAttribute("aria-pressed", state.answers[state.idx] === o.v ? "true" : "false");
+      b.innerHTML = '<span class="pts">' + o.v + ' pt' + (o.v === 1 ? "" : "s") + '</span><span>' + o.label + '</span>';
+      b.addEventListener("click", function () { choose(o.v); });
+      box.appendChild(b);
+    });
+    $("back-btn").disabled = state.idx === 0;
+  }
+
+  function choose(v) {
+    state.answers[state.idx] = v;
+    renderQuestion();
+    setTimeout(function () {
+      if (state.idx < QUESTIONS.length - 1) {
+        state.idx += 1;
+        renderQuestion();
+      } else {
+        showResult();
+      }
+    }, 220);
+  }
+
+  /* Scoring */
+  function compute() {
+    var totals = {};
+    AREAS.forEach(function (a) { totals[a.key] = 0; });
+    QUESTIONS.forEach(function (q, i) { totals[q.a] += state.answers[i] || 0; });
+    var rows = AREAS.map(function (a) {
+      var pct = totals[a.key] / a.max;
+      var status = pct < 0.5 ? "risk" : pct < 0.8 ? "watch" : "good";
+      return { area: a, score: totals[a.key], pct: pct, status: status };
+    });
+    var total = rows.reduce(function (n, r) { return n + r.score; }, 0);
+    return { rows: rows, total: total };
+  }
+
+  function band(total) {
+    if (total <= 10) return { cls: "risk", tag: "Likely leaking now", title: "Losses are likely happening without anyone noticing.", text: "That is common and fixable. The steps below cost little and can start this week." };
+    if (total <= 20) return { cls: "watch", tag: "Gaps to close", title: "You have some safeguards, with gaps worth closing.", text: "Fix the areas marked Focus now first, then turn the Watch areas into Strong ones." };
+    return { cls: "good", tag: "Solid foundation", title: "Your foundation is good. Keep it that way.", text: "Businesses drift as staff, volumes and software change, so repeat this check every quarter." };
+  }
+
+  var COLORS = { risk: "#ef6a5b", watch: "#f0a04b", good: "#5fc59a" };
+  var STATUS_TEXT = { risk: "Focus now", watch: "Watch", good: "Strong" };
+
+  /* Result */
+  function showResult() {
+    var res = compute();
+    var b = band(res.total);
+    show("screen-result");
+
+    $("ring-total").textContent = res.total;
+    var arc = $("ring-arc");
+    arc.setAttribute("stroke", COLORS[b.cls]);
+    var circ = 2 * Math.PI * 52;
+    arc.style.strokeDashoffset = circ;
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      arc.style.strokeDashoffset = circ * (1 - res.total / 30);
+    }); });
+    var bandEl = $("band");
+    bandEl.textContent = b.tag;
+    bandEl.style.color = COLORS[b.cls];
+    $("band-title").textContent = b.title;
+    $("band-text").textContent = b.text;
+
+    drawRadar(res.rows);
+
+    var sorted = res.rows.slice().sort(function (x, y) { return x.pct - y.pct; });
+    var list = $("areas");
+    list.innerHTML = "";
+    sorted.forEach(function (r) {
+      var d = document.createElement("div");
+      d.className = "area";
+      d.innerHTML = '<div><span class="nm">' + r.area.name + '</span><span class="pill ' + r.status + '">' + STATUS_TEXT[r.status] + '</span></div>' +
+        '<div class="sc">' + r.score + ' / ' + r.area.max + '</div>' +
+        '<div class="bar"><i style="width:' + Math.round(r.pct * 100) + '%;background:' + COLORS[r.status] + '"></i></div>';
+      list.appendChild(d);
+    });
+
+    var steps = [];
+    sorted.forEach(function (r) {
+      if (r.status === "good" || steps.length >= 4) return;
+      steps.push({ tag: r.area.name, text: r.area.actions[0] });
+      if (r.status === "risk" && steps.length < 4) steps.push({ tag: r.area.name, text: r.area.actions[1] });
+    });
+    var ol = $("steps");
+    ol.innerHTML = "";
+    if (!steps.length) {
+      $("steps-sub").textContent = "No urgent gaps. Keep the checks you have, and repeat this check every quarter.";
+    } else {
+      $("steps-sub").textContent = "Simple, low-cost steps for your weakest areas, in order.";
+      steps.forEach(function (s) {
+        var li = document.createElement("li");
+        li.innerHTML = '<div><span class="tag">' + s.tag + '</span>' + s.text + '</div>';
+        ol.appendChild(li);
+      });
+    }
+
+    buildMessage(res, b, sorted);
+  }
+
+  function drawRadar(rows) {
+    var svg = $("radar");
+    var cx = 200, cy = 180, R = 108, n = rows.length;
+    var NS = "http://www.w3.org/2000/svg";
+    svg.innerHTML = "";
+    function pt(i, frac, extra) {
+      var ang = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+      var r = R * frac + (extra || 0);
+      return [cx + r * Math.cos(ang), cy + r * Math.sin(ang), ang];
+    }
+    function el(name, attrs) {
+      var e = document.createElementNS(NS, name);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      svg.appendChild(e);
+      return e;
+    }
+    [0.25, 0.5, 0.75, 1].forEach(function (f) {
+      var pts = [];
+      for (var i = 0; i < n; i++) { var p = pt(i, f); pts.push(p[0].toFixed(1) + "," + p[1].toFixed(1)); }
+      el("polygon", { points: pts.join(" "), fill: "none", stroke: "#2a323d", "stroke-width": f === 1 ? 1.4 : 1 });
+    });
+    for (var i = 0; i < n; i++) {
+      var o = pt(i, 1);
+      el("line", { x1: cx, y1: cy, x2: o[0].toFixed(1), y2: o[1].toFixed(1), stroke: "#2a323d", "stroke-width": 1 });
+    }
+    var dpts = rows.map(function (r, i) { var p = pt(i, Math.max(r.pct, 0.04)); return p[0].toFixed(1) + "," + p[1].toFixed(1); });
+    el("polygon", { points: dpts.join(" "), fill: "rgba(205,165,82,0.22)", stroke: "#cda552", "stroke-width": 2, "stroke-linejoin": "round" });
+    rows.forEach(function (r, i) {
+      var p = pt(i, Math.max(r.pct, 0.04));
+      el("circle", { cx: p[0].toFixed(1), cy: p[1].toFixed(1), r: 5, fill: COLORS[r.status], stroke: "#0e1217", "stroke-width": 2 });
+      var l = pt(i, 1, 24);
+      var cos = Math.cos(l[2]);
+      var anchor = Math.abs(cos) < 0.2 ? "middle" : (cos > 0 ? "start" : "end");
+      var ly = l[1] + (Math.sin(l[2]) > 0.5 ? 6 : (Math.sin(l[2]) < -0.5 ? -2 : 0));
+      var t = el("text", { x: l[0].toFixed(1), y: ly.toFixed(1), "text-anchor": anchor, "font-family": "Source Sans 3, sans-serif", "font-size": 13.5, "font-weight": 600, fill: "#ece9e2" });
+      t.textContent = r.area.short;
+      var t2 = el("text", { x: l[0].toFixed(1), y: (ly + 15).toFixed(1), "text-anchor": anchor, "font-family": "Source Serif 4, Georgia, serif", "font-size": 12, fill: COLORS[r.status] });
+      t2.textContent = r.score + "/" + r.area.max;
+    });
+  }
+
+  function buildMessage(res, b, sorted) {
+    var lines = [];
+    lines.push("Hi Ketaki,");
+    lines.push("");
+    lines.push("I took the Business Health Check.");
+    if (state.biz) lines.push("Business type: " + SETS[state.biz].label);
+    lines.push("Overall score: " + res.total + " / 30 (" + b.tag + ")");
+    lines.push("");
+    res.rows.forEach(function (r) {
+      lines.push("- " + r.area.name + ": " + r.score + " / " + r.area.max + " (" + STATUS_TEXT[r.status] + ")");
+    });
+    var focus = sorted.filter(function (r) { return r.status !== "good"; }).slice(0, 3).map(function (r) { return r.area.name; });
+    lines.push("");
+    lines.push("Areas to look at first: " + (focus.length ? focus.join(", ") : "none urgent"));
+    lines.push("");
+    lines.push("I would like your observations on what this pattern means for my business.");
+    lines.push("");
+    lines.push("Name:");
+    lines.push("Business:");
+    lines.push("City:");
+    var body = lines.join("\n");
+    $("msg").value = body;
+  }
+
+  function setStatus(t) { $("status").textContent = t; }
+
+  function copyText(text, okMsg) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { setStatus(okMsg); }, function () { fallbackCopy(); });
+        return;
+      }
+    } catch (e) { /* fall through */ }
+    fallbackCopy();
+  }
+  function fallbackCopy() {
+    var d = document.querySelector("details");
+    if (d) d.open = true;
+    var m = $("msg");
+    m.focus();
+    m.select();
+    setStatus("Press Ctrl+C (or Cmd+C) to copy the selected text.");
+  }
+
+  /* Wiring */
+  $("start-btn").addEventListener("click", startQuiz);
+  $("back-btn").addEventListener("click", function () { if (state.idx > 0) { state.idx -= 1; renderQuestion(); } });
+  $("restart-btn").addEventListener("click", function () { state.answers = []; show("screen-start"); });
+  $("retake-btn").addEventListener("click", function () { state.answers = []; setStatus(""); show("screen-start"); });
+  $("copy-btn").addEventListener("click", function () { copyText($("msg").value, "Scorecard text copied. Paste it into an email to " + EMAIL + "."); });
+  $("share-btn").addEventListener("click", function () {
+    var link = "";
+    try { link = window.location.href; } catch (e) { link = ""; }
+    if (!link) { setStatus("Copy the address from your browser to share this page."); return; }
+    try {
+      navigator.clipboard.writeText(link).then(function () { setStatus("Link copied. Share it with another business owner."); }, function () { setStatus("Copy the address from your browser to share this page."); });
+    } catch (e) { setStatus("Copy the address from your browser to share this page."); }
+  });
+
+  renderChips();
+})();
+</script>
+</body>
+</html>
